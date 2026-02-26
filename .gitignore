@@ -1,0 +1,7 @@
+# Data directories
+ollama_data/
+open_webui_data/
+
+# OS files
+.DS_Store
+Thumbs.db
