@@ -34,10 +34,26 @@ jobs:
           sleep 60
           docker ps
 
-      - name: Pre-load AI Model
+      - name: Pre-load AI Models
         run: |
-          echo "Pulling llama3.2:1b inside Ollama container..."
+          echo "Pulling models (this may take a few minutes)..."
+          echo "1. Pulling llama3.2:1b (Fast/Modern)..."
           docker exec ollama ollama pull llama3.2:1b
+          
+          echo "2. Pulling tinyllama (Lightning fast/Dumber)..."
+          docker exec ollama ollama pull tinyllama
+          
+          echo "3. Pulling phi3 (Small but Smart)..."
+          docker exec ollama ollama pull phi3
+          
+          echo "4. Pulling llama3.2:3b (Smart/Balanced)..."
+          docker exec ollama ollama pull llama3.2:3b
+
+          echo "5. Pulling llama3.1:8b (Heavy/Smartest)..."
+          docker exec ollama ollama pull llama3.1:8b
+
+          echo "6. Pulling llama3.1:70b (EXTREME - Note: This will likely exceed GitHub disk/RAM limits)..."
+          docker exec ollama ollama pull llama3.1:70b
 
       - name: Setup Cloudflared Tunnel
         run: |
