@@ -1,7 +1,7 @@
 name: Start AI WebUI
 
 on:
-  workflow_dispatch: # Allows manual start
+  workflow_dispatch:
   push:
     branches: [ main ]
 
@@ -12,19 +12,42 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Compose
+      - name: Maximize build space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Pull Docker images with retries
+        run: |
+          for i in {1..5}; do
+            docker compose pull && break || (echo "Pull failed, retrying in 15s..." && sleep 15)
+          done
+
+      - name: Start Services
         run: |
           docker compose up -d
-          echo "Waiting for services to start..."
-          sleep 15
+          echo "Waiting for Ollama to be ready..."
+          until curl -s http://localhost:11434/api/tags > /dev/null; do sleep 5; done
+
+      - name: Pre-load AI Model
+        run: |
+          echo "Downloading a small, fast model (llama3.2:1b)..."
+          docker exec ollama ollama pull llama3.2:1b
 
       - name: Install Cloudflared
         run: |
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: Create Tunnel and Expose WebUI
+      - name: Expose WebUI and Provide Link
         run: |
-          echo "----------------------------------------------------------"
-          echo "ACCESS YOUR AI HERE:"
+          echo "=========================================================="
+          echo "🚀 YOUR AI IS STARTING UP!"
+          echo "1. Look for the '.trycloudflare.com' link below."
+          echo "2. Open it in your browser."
+          echo "3. The first run might take 30-60 seconds to load."
+          echo "=========================================================="
           cloudflared tunnel --url http://localhost:3000
