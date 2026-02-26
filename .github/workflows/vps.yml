@@ -16,11 +16,12 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
 
-      - name: Start Ubuntu NoVNC Desktop
+      - name: Start Robust Desktop
         run: |
           docker compose up -d
-          echo "Waiting for the VNC server to initialize (approx 45 seconds)..."
-          sleep 45
+          echo "Waiting for GUI server to bind to port 6901..."
+          # Wait until port 6901 is active
+          timeout 60s bash -c 'until curl -s http://localhost:6901 > /dev/null; do sleep 2; done'
           docker ps
 
       - name: Setup Ngrok
@@ -32,10 +33,11 @@ jobs:
       - name: Expose and Connect
         run: |
           echo "=========================================================="
-          echo "🚀 YOUR CLOUD PC IS STARTING!"
-          echo "URL: https://${{ secrets.NGROK_DOMAIN }}"
-          echo "Desktop Password: ${{ secrets.REMOTE_PASSWORD }}"
+          echo "🚀 YOUR CLOUD PC IS READY!"
+          echo "URL: https://${{ secrets.NGROK_DOMAIN }}/vnc.html"
+          echo "VNC Password: ${{ secrets.REMOTE_PASSWORD }}"
           echo "=========================================================="
           
-          # Dorowu image uses port 80 for the web interface
-          ngrok http 80 --authtoken ${{ secrets.NGROK_AUTHTOKEN }} --domain ${{ secrets.NGROK_DOMAIN }}
+          # Fix: Use --host-header to prevent 500 errors
+          # Port 6901 is the standard port for this robust image
+          ngrok http 6901 --authtoken ${{ secrets.NGROK_AUTHTOKEN }} --domain ${{ secrets.NGROK_DOMAIN }} --host-header="localhost:6901"

@@ -1,11 +1,9 @@
 services:
   desktop:
-    image: dorowu/ubuntu-desktop-lxde-vnc:latest
+    image: accetto/ubuntu-vnc-xfce-g3
     container_name: remote-desktop
+    network_mode: host
     environment:
-      - VNC_PASSWORD=${REMOTE_PASSWORD} # Uses your existing secret
-      - RESOLUTION=1280x720
-    ports:
-      - "80:80"
-    shm_size: "1gb"
+      - VNC_PW=${REMOTE_PASSWORD}
+      - VNC_RESOLUTION=1280x720
     restart: always
