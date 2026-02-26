@@ -16,13 +16,11 @@ jobs:
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
 
-      - name: Start GUI Desktop
-        env:
-          REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+      - name: Start Browser-Ready Desktop
         run: |
           docker compose up -d
-          echo "Waiting for Desktop to initialize..."
-          sleep 30
+          echo "Waiting for GUI to be ready (approx 20 seconds)..."
+          sleep 20
           docker ps
 
       - name: Setup Ngrok
@@ -34,11 +32,9 @@ jobs:
       - name: Expose and Connect
         run: |
           echo "=========================================================="
-          echo "🚀 YOUR REMOTE DESKTOP IS STARTING!"
+          echo "🚀 YOUR CLOUD PC IS READY!"
           echo "URL: https://${{ secrets.NGROK_DOMAIN }}"
-          echo "Username: abc"
-          echo "Password: ${{ secrets.REMOTE_PASSWORD }}"
           echo "=========================================================="
           
-          # Webtop runs on port 3000
-          ngrok http 3000 --authtoken ${{ secrets.NGROK_AUTHTOKEN }} --domain ${{ secrets.NGROK_DOMAIN }}
+          # This image serves the GUI on port 80
+          ngrok http 80 --authtoken ${{ secrets.NGROK_AUTHTOKEN }} --domain ${{ secrets.NGROK_DOMAIN }}
