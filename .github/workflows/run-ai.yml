@@ -36,36 +36,28 @@ jobs:
 
       - name: Pre-load AI Models
         run: |
-          echo "Pulling models (this may take a few minutes)..."
-          echo "1. Pulling llama3.2:1b (Fast/Modern)..."
+          echo "Pulling Essential Models..."
+          echo "1. llama3.2:1b (Fast)"
           docker exec ollama ollama pull llama3.2:1b
-          
-          echo "2. Pulling tinyllama (Lightning fast/Dumber)..."
-          docker exec ollama ollama pull tinyllama
-          
-          echo "3. Pulling phi3 (Small but Smart)..."
-          docker exec ollama ollama pull phi3
-          
-          echo "4. Pulling llama3.2:3b (Smart/Balanced)..."
-          docker exec ollama ollama pull llama3.2:3b
-
-          echo "5. Pulling llama3.1:8b (Heavy/Smartest)..."
+          echo "2. deepseek-r1:7b (Smart Reasoning)"
+          docker exec ollama ollama pull deepseek-r1:7b
+          echo "3. llama3.1:8b (Smarter All-rounder)"
           docker exec ollama ollama pull llama3.1:8b
 
-          echo "6. Pulling llama3.1:70b (EXTREME - Note: This will likely exceed GitHub disk/RAM limits)..."
-          docker exec ollama ollama pull llama3.1:70b
-
-      - name: Setup Cloudflared Tunnel
+      - name: Setup Ngrok
         run: |
-          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared-linux-amd64.deb
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok
 
       - name: Expose and Connect
         run: |
           echo "=========================================================="
-          echo "🚀 YOUR AI IS RUNNING ON THE HOST NETWORK!"
-          echo "Access Port: 8080"
-          echo "Look for the '.trycloudflare.com' link below."
+          if [ -z "${{ secrets.NGROK_DOMAIN }}" ]; then
+            echo "🚀 STARTING WITH DYNAMIC URL (Secret 'NGROK_DOMAIN' not found)"
+            ngrok http 8080 --authtoken ${{ secrets.NGROK_AUTHTOKEN }}
+          else
+            echo "🚀 STARTING WITH STATIC DOMAIN: https://${{ secrets.NGROK_DOMAIN }}"
+            ngrok http 8080 --authtoken ${{ secrets.NGROK_AUTHTOKEN }} --domain ${{ secrets.NGROK_DOMAIN }}
+          fi
           echo "=========================================================="
-          # Open WebUI uses port 8080 by default when in host mode
-          cloudflared tunnel --url http://localhost:8080
