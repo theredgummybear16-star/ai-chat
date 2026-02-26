@@ -1,1 +1,17 @@
-
+services:
+  desktop:
+    image: lscr.io/linuxserver/webtop:ubuntu-xfce
+    container_name: remote-desktop
+    privileged: true # Allows for better performance
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - PASSWORD=${REMOTE_PASSWORD} # Uses your secret
+    volumes:
+      - /home/runner/work/config:/config
+      - /var/run/docker.sock:/var/run/docker.sock # Allows you to run docker inside the desktop
+    ports:
+      - 3000:3000
+    shm_size: "1gb" # Prevents browser crashes in the GUI
+    restart: unless-stopped
