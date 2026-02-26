@@ -1,9 +1,11 @@
 services:
   desktop:
-    image: fredblgr/ubuntu-novnc:20.04
+    image: dorowu/ubuntu-desktop-lxde-vnc:latest
     container_name: remote-desktop
     environment:
+      - VNC_PASSWORD=${REMOTE_PASSWORD} # Uses your existing secret
       - RESOLUTION=1280x720
     ports:
       - "80:80"
+    shm_size: "1gb"
     restart: always
