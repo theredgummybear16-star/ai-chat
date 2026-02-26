@@ -14,40 +14,42 @@ jobs:
 
       - name: Maximize build space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+          df -h
 
-      - name: Pull Docker images with retries
+      - name: Pull Images with Retries
         run: |
-          for i in {1..5}; do
-            docker compose pull && break || (echo "Pull failed, retrying in 15s..." && sleep 15)
+          echo "Pulling Ollama..."
+          docker pull ollama/ollama:latest
+          
+          echo "Pulling Open WebUI (GHCR)..."
+          for i in {1..5}; do 
+            docker pull ghcr.io/open-webui/open-webui:main && break || (echo "Retry $i..." && sleep 20)
           done
 
       - name: Start Services
         run: |
           docker compose up -d
-          echo "Waiting for Ollama to be ready..."
-          until curl -s http://localhost:11434/api/tags > /dev/null; do sleep 5; done
+          echo "Waiting for services to start on host network..."
+          sleep 60
+          docker ps
 
       - name: Pre-load AI Model
         run: |
-          echo "Downloading a small, fast model (llama3.2:1b)..."
+          echo "Pulling llama3.2:1b inside Ollama container..."
           docker exec ollama ollama pull llama3.2:1b
 
-      - name: Install Cloudflared
+      - name: Setup Cloudflared Tunnel
         run: |
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: Expose WebUI and Provide Link
+      - name: Expose and Connect
         run: |
           echo "=========================================================="
-          echo "🚀 YOUR AI IS STARTING UP!"
-          echo "1. Look for the '.trycloudflare.com' link below."
-          echo "2. Open it in your browser."
-          echo "3. The first run might take 30-60 seconds to load."
+          echo "🚀 YOUR AI IS RUNNING ON THE HOST NETWORK!"
+          echo "Access Port: 8080"
+          echo "Look for the '.trycloudflare.com' link below."
           echo "=========================================================="
-          cloudflared tunnel --url http://localhost:3000
+          # Open WebUI uses port 8080 by default when in host mode
+          cloudflared tunnel --url http://localhost:8080

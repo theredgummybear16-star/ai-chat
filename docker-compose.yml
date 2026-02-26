@@ -2,32 +2,20 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
+    network_mode: host
     volumes:
       - ollama:/root/.ollama
-    ports:
-      - "11434:11434"
-    networks:
-      - ai-network
     restart: always
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
+    network_mode: host
     volumes:
       - open-webui:/app/backend/data
-    depends_on:
-      - ollama
-    ports:
-      - "3000:8080"
     environment:
-      - 'OLLAMA_BASE_URL=http://ollama:11434'
-    networks:
-      - ai-network
+      - 'OLLAMA_BASE_URL=http://127.0.0.1:11434'
     restart: always
-
-networks:
-  ai-network:
-    driver: bridge
 
 volumes:
   ollama:
